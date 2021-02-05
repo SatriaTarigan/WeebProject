@@ -167,7 +167,9 @@ async def zip(event):
                         arc_path = join(zip_name, relpath(files_path, input_str))
                         zip.write(files_path, arc_path)
             end_time = (datetime.now() - start_time).seconds
-            await event.edit(f"Zipped `{input_str}` into `{zip_path}` in `{end_time}` seconds.")
+            await event.edit(
+                f"Zipped `{input_str}` into `{zip_path}` in `{end_time}` seconds."
+            )
     else:
         await event.edit("`404: Not Found`")
 
