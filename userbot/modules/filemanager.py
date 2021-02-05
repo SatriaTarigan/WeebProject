@@ -5,10 +5,12 @@ import os
 import os.path
 import shutil
 import time
-from os.path import dirname, exists, isdir, isfile, join
+from datetime import datetime
+from os.path import dirname, exists, isdir, isfile, join, relpath
 from shutil import rmtree
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from userbot import CMD_HELP
+from userbot import CMD_HELP, TEMP_DOWNLOAD_DIRECTORY
 from userbot.events import register
 from userbot.utils import humanbytes
 
@@ -143,6 +145,31 @@ async def rname(event):
     new_path = join(dirname(cat), new_name)
     shutil.move(cat, new_path)
     await event.edit(f"Renamed `{cat}` to `{new_path}`")
+
+
+@register(outgoing=True, pattern=r"^\.zip (.*)")
+async def zip(event):
+    if event.fwd_from:
+        return
+    input_str = event.pattern_match.group(1)
+    if exists(input_str):
+        await event.edit("`Zipping...`")
+        start_time = datetime.now()
+        if isdir(input_str):
+            zip_name = input_str.split("/")[-1]
+            if input_str.endswith("/"):
+                zip_name = input_str.split("/")[-2]
+            zip_path = join(TEMP_DOWNLOAD_DIRECTORY, zip_name) + ".zip"
+            with ZipFile(zip_path, "w", ZIP_DEFLATED) as zip:
+                for roots, _, files in os.walk(input_str):
+                    for file in files:
+                        files_path = join(roots, file)
+                        arc_path = join(zip_name, relpath(files_path, input_str))
+                        zip.write(files_path, arc_path)
+            end_time = (datetime.now() - start_time).seconds
+            await event.edit(f"Zipped `{input_str}` into `{zip_path}` in `{end_time}` seconds.")
+    else:
+        await event.edit("`404: Not Found`")
 
 
 CMD_HELP.update(
